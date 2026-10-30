@@ -1,0 +1,1 @@
+cómo funciona el API Gateway de AWS con conexiones wss:// para actualizar tu app en tiempo real
