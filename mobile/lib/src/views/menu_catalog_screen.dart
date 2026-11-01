@@ -7,7 +7,7 @@ class MenuCatalogScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Catálogo de Cafetería'),
+        title: const Text('Menú de la Cafetería'),
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_cart),
@@ -18,17 +18,34 @@ class MenuCatalogScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(8.0),
         children: [
-          ListTile(
-            leading: const Icon(Icons.fastfood),
-            title: const Text('Chilaquiles sencillos'),
-            subtitle: const Text('\$45.00'),
-            trailing: IconButton(
-              icon: const Icon(Icons.add_shopping_cart),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Agregado al carrito')),
-                );
-              },
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.fastfood, color: Colors.orange, size: 40),
+              title: const Text('Chilaquiles verdes con pollo', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('\$45.00 - Disponible'),
+              trailing: ElevatedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('¡Agregado al carrito!')),
+                  );
+                },
+                child: const Text('Agregar'),
+              ),
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.local_drink, color: Colors.brown, size: 40),
+              title: const Text('Café Americano (12oz)', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('\$20.00 - Caliente'),
+              trailing: ElevatedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('¡Agregado al carrito!')),
+                  );
+                },
+                child: const Text('Agregar'),
+              ),
             ),
           ),
         ],

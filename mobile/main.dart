@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'src/views/login_screen.dart';
+import 'src/views/menu_catalog_screen.dart';
+import 'src/views/cart_pickup_screen.dart';
+import 'src/views/ticket_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,13 +14,24 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'FIS Pickup Web',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const PickupHomePage(),
+      // Definimos la ruta inicial que será tu pantalla de Login
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LoginScreen(),
+        '/catalog': (context) => const MenuCatalogScreen(),
+        '/cart': (context) => const CartPickupScreen(),
+        '/ticket': (context) => const TicketScreen(),
+        // Si quieres conservar tu panel web original como una ruta extra, lo puedes agregar aquí:
+        '/admin-web': (context) => const PickupHomePage(),
+      },
     );
   }
 }
 
+// Conservamos tu panel original intacto por si el equipo lo sigue usando en la web
 class PickupHomePage extends StatelessWidget {
   const PickupHomePage({super.key});
 
@@ -41,6 +56,14 @@ class PickupHomePage extends StatelessWidget {
                 print('Conectando a WebSockets de AWS...');
               },
               child: const Text('Conectar con AWS WebSocket'),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                // Botón rápido para ir al flujo de estudiante
+                Navigator.pushNamed(context, '/');
+              },
+              child: const Text('Ir al Login de Estudiante'),
             ),
           ],
         ),
