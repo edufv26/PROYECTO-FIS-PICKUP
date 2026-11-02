@@ -4,6 +4,8 @@ import '../models/pedido.dart';
 import '../models/platillo.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cafeteria_provider.dart';
+import '../widgets/pedido_card.dart';
+import '../widgets/platillo_tile.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,7 +15,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _selectedIndex = 0; // 0 = Kanban Pedidos, 1 = Gestión de Menú
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -78,7 +80,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Column(
         children: [
-          // Barra superior de monitoreo de eventos WebSocket en tiempo real
           Container(
             width: double.infinity,
             color: Colors.grey.shade900,
@@ -97,7 +98,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(
             child: Row(
               children: [
-                // Menú lateral Web
                 NavigationRail(
                   selectedIndex: _selectedIndex,
                   onDestinationSelected: (idx) => setState(() => _selectedIndex = idx),
@@ -119,7 +119,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
                 const VerticalDivider(thickness: 1, width: 1),
-                // Contenido dinámico
                 Expanded(
                   child: _selectedIndex == 0
                       ? _KanbanView(cafeteriaId: auth.cafeteriaId ?? 'CAF_GRANDE')
@@ -134,9 +133,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ============================================================================
-// VISTA 1: MONITOR DE COLA DE PEDIDOS (KANBAN)
-// ============================================================================
 class _KanbanView extends StatelessWidget {
   final String cafeteriaId;
   const _KanbanView({required this.cafeteriaId});
@@ -177,7 +173,6 @@ class _KanbanView extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // Cabecera de la columna Kanban
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
@@ -202,7 +197,6 @@ class _KanbanView extends StatelessWidget {
                 ],
               ),
             ),
-            // Lista de tarjetas de pedidos
             Expanded(
               child: pedidos.isEmpty
                   ? const Center(child: Text('Sin pedidos', style: TextStyle(color: Colors.grey)))
@@ -211,63 +205,13 @@ class _KanbanView extends StatelessWidget {
                       itemCount: pedidos.length,
                       itemBuilder: (context, idx) {
                         final p = pedidos[idx];
-                        final minutos = DateTime.now().difference(p.horaPedido).inMinutes;
-
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          elevation: 2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      p.id,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF800020)),
-                                    ),
-                                    Text(
-                                      'Hace $minutos min',
-                                      style: TextStyle(fontSize: 12, color: minutos > 10 ? Colors.red : Colors.grey.shade700),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text('${p.alumnoNombre} (${p.matricula})', style: const TextStyle(fontWeight: FontWeight.w500)),
-                                const Divider(),
-                                ...p.items.map((item) => Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 2.0),
-                                      child: Text('• $item', style: const TextStyle(fontSize: 13)),
-                                    )),
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('Total: \$${p.total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                                if (textoBotonAccion != null) ...[
-                                  const SizedBox(height: 10),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: colorHeader,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      icon: const Icon(Icons.arrow_forward, size: 16),
-                                      label: Text(textoBotonAccion, style: const TextStyle(fontSize: 12)),
-                                      onPressed: () {
-                                        context.read<CafeteriaProvider>().avanzarEstadoPedido(p.id, cafeteriaId);
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
+                        return PedidoCard(
+                          pedido: p,
+                          colorHeader: colorHeader,
+                          textoBotonAccion: textoBotonAccion,
+                          onAvanzarEstado: () {
+                            context.read<CafeteriaProvider>().avanzarEstadoPedido(p.id, cafeteriaId);
+                          },
                         );
                       },
                     ),
@@ -279,9 +223,6 @@ class _KanbanView extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// VISTA 2: GESTIÓN DEL MENÚ Y BOTÓN DE "AGOTADO" EN TIEMPO REAL
-// ============================================================================
 class _MenuManagementView extends StatelessWidget {
   final String cafeteriaId;
   const _MenuManagementView({required this.cafeteriaId});
@@ -383,61 +324,12 @@ class _MenuManagementView extends StatelessWidget {
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, idx) {
                   final item = menu[idx];
-                  return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    leading: CircleAvatar(
-                      backgroundColor: item.disponible ? Colors.green.shade100 : Colors.red.shade100,
-                      child: Icon(
-                        item.disponible ? Icons.check_circle : Icons.cancel,
-                        color: item.disponible ? Colors.green.shade800 : Colors.red.shade800,
-                      ),
-                    ),
-                    title: Text(
-                      item.nombre,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        decoration: item.disponible ? null : TextDecoration.lineThrough,
-                      ),
-                    ),
-                    subtitle: Text('${item.categoria} • \$${item.precio.toStringAsFixed(2)} MXN'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // ETIQUETA DE ESTADO
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: item.disponible ? Colors.green.shade50 : Colors.red.shade50,
-                            border: Border.all(color: item.disponible ? Colors.green : Colors.red),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            item.disponible ? 'DISPONIBLE' : 'AGOTADO',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: item.disponible ? Colors.green.shade800 : Colors.red.shade800,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // SWITCH TIEMPO REAL (WEBSOCKET)
-                        Switch(
-                          value: item.disponible,
-                          activeColor: Colors.green.shade700,
-                          onChanged: (_) {
-                            context.read<CafeteriaProvider>().toggleDisponibilidadPlatillo(item.id, cafeteriaId);
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined),
-                          tooltip: 'Editar platillo',
-                          onPressed: () => _mostrarModalPlatillo(context, platillo: item),
-                        ),
-                      ],
-                    ),
+                  return PlatilloTile(
+                    platillo: item,
+                    onToggleDisponibilidad: () {
+                      context.read<CafeteriaProvider>().toggleDisponibilidadPlatillo(item.id, cafeteriaId);
+                    },
+                    onEditar: () => _mostrarModalPlatillo(context, platillo: item),
                   );
                 },
               ),
