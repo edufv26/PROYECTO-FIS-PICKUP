@@ -48,3 +48,4 @@ CREATE TABLE detalle_pedidos (
     cantidad INT NOT NULL DEFAULT 1,
     precio_unitario DECIMAL(8, 2) NOT NULL
 );
+--En caso de mas datos avisenme y si ven algun error me lo reportan en el grupo
