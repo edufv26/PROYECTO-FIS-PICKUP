@@ -1,0 +1,19 @@
+{
+  "name": "tese-pickup-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "serverless offline",
+    "crear-bd": "node scripts/crear-bd.js",
+    "alta-cafeteria": "node scripts/alta-cafeteria.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "serverless": "^3.39.0",
+    "serverless-offline": "^13.9.0"
+  }
+}

@@ -1,0 +1,76 @@
+service: tese-pickup-backend
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  environment:
+    JWT_SECRET: cambia_esta_clave_secreta
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    host: 0.0.0.0
+    httpPort: 3000
+    noPrependStageInUrl: true
+
+functions:
+  registro:
+    handler: src/auth.registro
+    events:
+      - http:
+          path: auth/registro
+          method: post
+          cors: true
+
+  login:
+    handler: src/auth.login
+    events:
+      - http:
+          path: auth/login
+          method: post
+          cors: true
+
+  perfil:
+    handler: src/auth.perfil
+    events:
+      - http:
+          path: auth/perfil
+          method: get
+          cors: true
+
+  verMenu:
+    handler: src/menu.verMenu
+    events:
+      - http:
+          path: cafeterias/{id}/menu
+          method: get
+          cors: true
+
+  guardarPlatillo:
+    handler: src/menu.guardarPlatillo
+    events:
+      - http:
+          path: cafeterias/{id}/menu
+          method: post
+          cors: true
+
+  verPedidos:
+    handler: src/pedidos.verPedidos
+    events:
+      - http:
+          path: cafeterias/{id}/pedidos
+          method: get
+          cors: true
+
+  cambiarEstado:
+    handler: src/pedidos.cambiarEstado
+    events:
+      - http:
+          path: cafeterias/{id}/pedidos/{pid}/estado
+          method: patch
+          cors: true
