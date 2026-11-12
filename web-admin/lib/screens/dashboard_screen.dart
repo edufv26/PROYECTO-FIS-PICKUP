@@ -223,9 +223,20 @@ class _KanbanView extends StatelessWidget {
   }
 }
 
-class _MenuManagementView extends StatelessWidget {
+// ============================================================================
+// VISTA 2 CON BUSCADOR Y FILTROS POR CATEGORÍA
+// ============================================================================
+class _MenuManagementView extends StatefulWidget {
   final String cafeteriaId;
   const _MenuManagementView({required this.cafeteriaId});
+
+  @override
+  State<_MenuManagementView> createState() => _MenuManagementViewState();
+}
+
+class _MenuManagementViewState extends State<_MenuManagementView> {
+  String _busqueda = '';
+  String _categoriaSeleccionada = 'Todas';
 
   void _mostrarModalPlatillo(BuildContext context, {Platillo? platillo}) {
     final nombreCtrl = TextEditingController(text: platillo?.nombre ?? '');
@@ -286,7 +297,17 @@ class _MenuManagementView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final menu = context.watch<CafeteriaProvider>().menu;
+    final menuCompleto = context.watch<CafeteriaProvider>().menu;
+
+    // Extraer categorías únicas dinámicamente para los botones de filtro
+    final categorias = ['Todas', ...{...menuCompleto.map((p) => p.categoria)}];
+
+    // Filtrar platillos por texto de búsqueda y por categoría seleccionada
+    final menuFiltrado = menuCompleto.where((platillo) {
+      final coincideNombre = platillo.nombre.toLowerCase().contains(_busqueda.toLowerCase());
+      final coincideCategoria = _categoriaSeleccionada == 'Todas' || platillo.categoria == _categoriaSeleccionada;
+      return coincideNombre && coincideCategoria;
+    }).toList();
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -316,23 +337,80 @@ class _MenuManagementView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
+
+          // BARRA DE BÚSQUEDA Y CHIPS DE CATEGORÍA
+          Row(
+            children: [
+              SizedBox(
+                width: 320,
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Buscar platillo...',
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                  ),
+                  onChanged: (valor) => setState(() => _busqueda = valor),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: categorias.map((cat) {
+                      final seleccionado = _categoriaSeleccionada == cat;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          label: Text(cat),
+                          selected: seleccionado,
+                          selectedColor: const Color(0xFF800020),
+                          labelStyle: TextStyle(
+                            color: seleccionado ? Colors.white : Colors.black87,
+                            fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          onSelected: (_) => setState(() => _categoriaSeleccionada = cat),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // LISTA DE PLATILLOS
           Expanded(
             child: Card(
               elevation: 2,
-              child: ListView.separated(
-                itemCount: menu.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, idx) {
-                  final item = menu[idx];
-                  return PlatilloTile(
-                    platillo: item,
-                    onToggleDisponibilidad: () {
-                      context.read<CafeteriaProvider>().toggleDisponibilidadPlatillo(item.id, cafeteriaId);
-                    },
-                    onEditar: () => _mostrarModalPlatillo(context, platillo: item),
-                  );
-                },
-              ),
+              child: menuFiltrado.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No se encontraron platillos con ese filtro.',
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    )
+                  : ListView.separated(
+                      itemCount: menuFiltrado.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, idx) {
+                        final item = menuFiltrado[idx];
+                        return PlatilloTile(
+                          platillo: item,
+                          onToggleDisponibilidad: () {
+                            context.read<CafeteriaProvider>().toggleDisponibilidadPlatillo(item.id, widget.cafeteriaId);
+                          },
+                          onEditar: () => _mostrarModalPlatillo(context, platillo: item),
+                        );
+                      },
+                    ),
             ),
           ),
         ],
