@@ -1,0 +1,228 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "TESE Pickup - Suite de Pruebas QA (AWS Serverless)",
+    "description": "Colección automatizada de pruebas funcionales, validación de roles institucionales y control de latencia para la API de cafeterías del TESE.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.tese-pickup.com/v1",
+      "type": "string"
+    },
+    {
+      "key": "jwtToken",
+      "value": "TOKEN_JWT_INSTITUCIONAL",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "RF01 - Login Exitoso (@tese.edu.mx)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Código de estado HTTP es 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Respuesta contiene token JWT y rol asignado', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('token');",
+              "    pm.expect(jsonData.rol).to.be.oneOf(['estudiante', 'docente', 'cafeteria', 'admin']);",
+              "});",
+              "pm.test('Tiempo de respuesta menor a 1500ms', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(1500);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"correo\": \"202320045@tese.edu.mx\",\n  \"password\": \"ClaveSeguraTESE2026\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "RF01 - Prueba Negativa: Rechazo de Correo Externo",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('El sistema bloquea dominios no institucionales (401/403)', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+              "});",
+              "pm.test('Mensaje de error indica restricción de dominio TESE', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('error');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"correo\": \"alumno.prueba@gmail.com\",\n  \"password\": \"Password123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "RF02 - Consultar Menú Dinámico (Caché Redis)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Consulta de menú exitosa (200 OK)', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Latencia de lectura en caché menor a 1000ms (RNF01)', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/productos?cafeteria_id=1",
+          "host": ["{{baseUrl}}"],
+          "path": ["productos"],
+          "query": [
+            {
+              "key": "cafeteria_id",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "RF03 - Crear Pedido Pickup y Validar Generación QR",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Pedido registrado correctamente (201 Created)', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test('Se genera hash QR único y estado inicial recibido', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('codigo_qr_hash');",
+              "    pm.expect(jsonData.estado).to.eql('recibido');",
+              "});",
+              "pm.test('Tiempo de transacción menor a 2000ms', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cafeteria_id\": 1,\n  \"hora_pickup_programada\": \"2026-11-18T11:15:00Z\",\n  \"metodo_pago\": \"monedero_tese\",\n  \"items\": [\n    {\n      \"id_producto\": 104,\n      \"cantidad\": 1,\n      \"notas_especiales\": \"Sin cebolla, salsa aparte\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/pedidos",
+          "host": ["{{baseUrl}}"],
+          "path": ["pedidos"]
+        }
+      }
+    },
+    {
+      "name": "HU-F02 / RF06 - Agotar Platillo en 1 Tap (KDS)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Actualización de inventario exitosa (200 OK)', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Propagación hacia AWS Lambda menor a 1000ms (HU-F02)', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"disponible\": false,\n  \"motivo\": \"Agotado en cocina\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/productos/104/disponibilidad",
+          "host": ["{{baseUrl}}"],
+          "path": ["productos", "104", "disponibilidad"]
+        }
+      }
+    }
+  ]
+}
