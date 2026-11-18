@@ -23,6 +23,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final cafId = context.read<AuthProvider>().cafeteriaId ?? 'CAF_GRANDE';
       context.read<CafeteriaProvider>().conectarWebSocket(cafId);
+      context.read<CafeteriaProvider>().cargarDatos(cafId);
     });
   }
 
@@ -64,9 +65,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               padding: const EdgeInsets.only(right: 12.0),
               child: FilledButton.icon(
                 style: FilledButton.styleFrom(backgroundColor: Colors.amber.shade800),
-                icon: const Icon(Icons.notifications_active, size: 18),
-                label: const Text('Simular Pedido Entrante'),
-                onPressed: () => cafProvider.simularNuevoPedido(),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Actualizar Pedidos'),
+                onPressed: () => cafProvider.cargarDatos(auth.cafeteriaId ?? 'CAF_GRANDE'),
               ),
             ),
           TextButton.icon(
@@ -284,6 +285,7 @@ class _MenuManagementViewState extends State<_MenuManagementView> {
                       nombre: nombre,
                       categoria: cat,
                       precio: precio,
+                      cafeteriaId: widget.cafeteriaId,
                     );
                 Navigator.pop(ctx);
               }

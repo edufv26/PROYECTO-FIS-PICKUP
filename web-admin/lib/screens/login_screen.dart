@@ -13,7 +13,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _userController = TextEditingController();
   final _passController = TextEditingController();
-  String _selectedCafeteria = 'CAF_GRANDE';
 
   Future<void> _submitLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -22,13 +21,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final exito = await authProvider.login(
       _userController.text.trim(),
       _passController.text.trim(),
-      _selectedCafeteria,
     );
 
     if (!exito && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Credenciales incorrectas. Usa la contraseña de prueba: tese123'),
+        SnackBar(
+          content: Text(authProvider.error ?? 'No se pudo iniciar sesión'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -70,30 +68,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 28),
 
-                    DropdownButtonFormField<String>(
-                      value: _selectedCafeteria,
-                      decoration: const InputDecoration(
-                        labelText: 'Sucursal / Cafetería',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.restaurant),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'CAF_GRANDE', child: Text('Cafetería Grande (Principal)')),
-                        DropdownMenuItem(value: 'CAF_CHICA_1', child: Text('Cafetería Pequeña 1')),
-                        DropdownMenuItem(value: 'CAF_CHICA_2', child: Text('Cafetería Pequeña 2')),
-                      ],
-                      onChanged: (val) => setState(() => _selectedCafeteria = val!),
-                    ),
-                    const SizedBox(height: 16),
-
                     TextFormField(
                       controller: _userController,
                       decoration: const InputDecoration(
-                        labelText: 'Usuario Administrativo',
+                        labelText: 'Correo del personal',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.person_outline),
                       ),
-                      validator: (val) => (val == null || val.isEmpty) ? 'Ingresa tu usuario' : null,
+                      validator: (val) => (val == null || val.isEmpty) ? 'Ingresa tu correo' : null,
                     ),
                     const SizedBox(height: 16),
 

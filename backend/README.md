@@ -57,6 +57,17 @@ npm run alta-cafeteria -- "Doña Mary" mary@cafeteria.com mary123 CAF_GRANDE
 
 Cafeterías: `CAF_GRANDE`, `CAF_CHICA_1`, `CAF_CHICA_2`.
 
+## Cuentas de prueba
+
+`datos_prueba.sql` ya trae estas cuentas (contraseña `123456` en las dos):
+
+| Correo | Rol |
+|---|---|
+| `cocina.grande@tese.edu.mx` | Cafetería (`CAF_GRANDE`) |
+| `carlos@tese.edu.mx` | Estudiante |
+
+También trae 2 pedidos de ejemplo para ver el Kanban del panel web.
+
 ## 4. Arrancar la API
 
 ```bash
@@ -103,4 +114,6 @@ El token dura 8 horas. Estados de pedido: `PENDIENTE`, `EN_PREPARACION`, `LISTO`
 - Tabla `cafeterias`
 - En `usuarios`: columnas `rol` (`estudiante` o `cafeteria`) e `id_cafeteria`; `matricula` ya no es obligatoria (el personal no tiene)
 - En `productos`: columna `id_cafeteria`
-- Tablas `pedidos` y `detalle_pedido`
+- En `pedidos`: columna `id_cafeteria` y validación de los 4 estados
+
+Las tablas `pedidos` y `detalle_pedidos` son las de Dev E; el backend solo les agrega lo que necesita.
