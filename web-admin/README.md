@@ -39,3 +39,19 @@ web-admin/lib/
 │   ├── pedido_card.dart       # Componente modular de tarjeta para columnas Kanban
 │   └── platillo_tile.dart     # Componente modular de fila de inventario con switch WS
 └── main.dart                  # Inyección de dependencias (MultiProvider) y configuración de tema
+
+---
+
+## ▶️ Cómo correrlo con el backend
+
+1. Arrancar el backend (ver `backend/README.md`): `npm run crear-bd` y `npm start`.
+2. En otra terminal:
+
+```bash
+cd web-admin
+flutter pub get
+flutter run -d chrome
+```
+
+Cuenta de prueba del personal: `cocina.grande@tese.edu.mx` / `123456`.
+La URL del backend está en `lib/services/aws_api_service.dart` (`http://localhost:3000`).

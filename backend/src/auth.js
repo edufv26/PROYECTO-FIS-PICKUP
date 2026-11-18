@@ -49,7 +49,10 @@ async function login(event) {
   }
 
   const resultado = await pool.query(
-    'SELECT * FROM usuarios WHERE correo_institucional = $1',
+    `SELECT u.*, c.nombre AS cafeteria_nombre
+     FROM usuarios u
+     LEFT JOIN cafeterias c ON c.id_cafeteria = u.id_cafeteria
+     WHERE u.correo_institucional = $1`,
     [correo.trim().toLowerCase()]
   );
   const usuario = resultado.rows[0];
@@ -69,6 +72,7 @@ async function login(event) {
     nombre: usuario.nombre_completo,
     rol: usuario.rol,
     id_cafeteria: usuario.id_cafeteria,
+    cafeteria_nombre: usuario.cafeteria_nombre,
   });
 }
 

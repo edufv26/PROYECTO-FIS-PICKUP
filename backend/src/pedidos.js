@@ -14,16 +14,16 @@ async function verPedidos(event) {
   const resultado = await pool.query(
     `SELECT pe.id_pedido::text AS id,
             u.nombre_completo AS "alumnoNombre",
-            u.matricula,
+            COALESCE(u.matricula, '') AS matricula,
             pe.total::float AS total,
             pe.fecha_pedido AS "horaPedido",
             pe.estado,
             COALESCE(array_agg(d.cantidad || 'x ' || pr.nombre) FILTER (WHERE d.id_detalle IS NOT NULL), '{}') AS items
      FROM pedidos pe
      JOIN usuarios u ON u.id_usuario = pe.id_usuario
-     LEFT JOIN detalle_pedido d ON d.id_pedido = pe.id_pedido
+     LEFT JOIN detalle_pedidos d ON d.id_pedido = pe.id_pedido
      LEFT JOIN productos pr ON pr.id_producto = d.id_producto
-     WHERE pe.id_cafeteria = $1 AND pe.estado <> 'ENTREGADO'
+     WHERE pe.id_cafeteria = $1
      GROUP BY pe.id_pedido, u.nombre_completo, u.matricula
      ORDER BY pe.fecha_pedido`,
     [idCafeteria]
