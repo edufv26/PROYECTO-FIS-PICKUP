@@ -4,52 +4,67 @@ import '../models/platillo.dart';
 import '../models/pedido.dart';
 
 class AwsApiService {
-  // URL base de AWS API Gateway (Reemplazar cuando el equipo de Backend despliegue)
-  static const String _baseUrl = 'https://tu-api-id.execute-api.us-east-1.amazonaws.com/prod';
+  static const String _baseUrl = 'http://localhost:3000';
+  static String? token;
 
-  // 1. Obtener el menú del día de una cafetería específica
+  Map<String, String> get _headers => {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+  Future<Map<String, dynamic>> login(String correo, String password) async {
+    final uri = Uri.parse('$_baseUrl/auth/login');
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode({'correo': correo, 'password': password}),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(data['error'] ?? 'Error al iniciar sesión');
+    }
+    return data;
+  }
+
   Future<List<Platillo>> fetchMenu(String cafeteriaId) async {
     final uri = Uri.parse('$_baseUrl/cafeterias/$cafeteriaId/menu');
-    final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
+    final response = await http.get(uri, headers: _headers);
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => Platillo.fromJson(json)).toList();
     } else {
-      throw Exception('Error al cargar el menú desde AWS: ${response.statusCode}');
+      throw Exception('Error al cargar el menú: ${response.statusCode}');
     }
   }
 
-  // 2. Crear o actualizar un platillo en AWS
   Future<bool> savePlatillo(String cafeteriaId, Platillo platillo) async {
     final uri = Uri.parse('$_baseUrl/cafeterias/$cafeteriaId/menu');
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode(platillo.toJson()),
     );
     return response.statusCode == 200 || response.statusCode == 201;
   }
 
-  // 3. Obtener la cola de pedidos activos para el Kanban
   Future<List<Pedido>> fetchPedidosActivos(String cafeteriaId) async {
     final uri = Uri.parse('$_baseUrl/cafeterias/$cafeteriaId/pedidos');
-    final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
+    final response = await http.get(uri, headers: _headers);
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => Pedido.fromJson(json)).toList();
     } else {
-      throw Exception('Error al cargar pedidos desde AWS: ${response.statusCode}');
+      throw Exception('Error al cargar pedidos: ${response.statusCode}');
     }
   }
 
-  // 4. Actualizar el estado de un pedido (PENDIENTE -> EN_PREPARACION -> LISTO -> ENTREGADO)
   Future<bool> updateEstadoPedido(String cafeteriaId, String pedidoId, EstadoPedido nuevoEstado) async {
     final uri = Uri.parse('$_baseUrl/cafeterias/$cafeteriaId/pedidos/$pedidoId/estado');
     final response = await http.patch(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode({'estado': nuevoEstado.name}),
     );
     return response.statusCode == 200;
